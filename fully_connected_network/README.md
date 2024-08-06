@@ -4,7 +4,6 @@
 
 [Feedforward neural network - Wikipedia](https://en.wikipedia.org/wiki/Feedforward_neural_network)
 
-
 ## Sample Usage
 
 ### 1. Learn the sum of two numbers
@@ -43,8 +42,6 @@ dnn = DeepNeuralNetwork(
 )
 
 # Test the trained model
-
-
 def test_model(num_tests=3):
   print('')
   for _ in range(num_tests):

@@ -1,7 +1,7 @@
 # Gated Recurrent Unit
 
 ![GRU architecture](https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Gated_Recurrent_Unit%2C_base_type.svg/2880px-Gated_Recurrent_Unit%2C_base_type.svg.png)
-[RNN - Wikipedia](https://en.wikipedia.org/wiki/Gated_recurrent_unit)
+[GRU - Wikipedia](https://en.wikipedia.org/wiki/Gated_recurrent_unit)
 
 ## Sample Usage
 
