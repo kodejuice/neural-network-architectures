@@ -130,7 +130,7 @@ dnn.train(
 )
 ```
 
-### 3. Word2Vec Implementation
+### 3. Learn Word Embedding with Word2Vec algorithm
 
 Fetch `shakespeare.txt` text from [here](https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt)
 
