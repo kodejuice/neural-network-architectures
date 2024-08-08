@@ -268,7 +268,7 @@ class GRUNetwork:
         if new_dataset:
           X_sequences, Y_sequences = new_dataset()
 
-      print(f"Epoch {epoch+1}, Loss: {total_loss}, LR: {LR}")
+      print(f"Epoch {epoch}, Loss: {total_loss}, LR: {LR}")
 
   def gru_weight_shapes(self):
     layer = self.gru_layer

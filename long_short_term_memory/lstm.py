@@ -272,19 +272,26 @@ class LSTMNetwork:
         if new_dataset:
           X_sequences, Y_sequences = new_dataset()
 
-      print(f"Epoch {epoch+1}, Loss: {total_loss}, LR: {LR}")
+      print(f"Epoch {epoch}, Loss: {total_loss}, LR: {LR}")
 
   def load_weights_from_file(self):
     model_file_name = self.model_file_name.replace('.json', '') + '.json'
     if os.path.exists(model_file_name):
       with open(model_file_name, 'r') as f:
         weights = json.load(f)
-        self.lstm_layer.Wf = np.array(weights['Wf'])
+        Wf = np.array(weights['Wf'])
+        bf = np.array(weights['bf'])
+        if Wf.shape != self.lstm_layer.Wf.shape or bf.shape != self.lstm_layer.bf.shape:
+          print('Shapes of saved model dont match')
+          os.rename(f'{model_file_name}.json', f'{model_file_name} (old).json')
+          return
+
+        self.lstm_layer.Wf = Wf
         self.lstm_layer.Wi = np.array(weights['Wi'])
         self.lstm_layer.Wc = np.array(weights['Wc'])
         self.lstm_layer.Wo = np.array(weights['Wo'])
         self.lstm_layer.Wy = np.array(weights['Wy'])
-        self.lstm_layer.bf = np.array(weights['bf'])
+        self.lstm_layer.bf = bf
         self.lstm_layer.bi = np.array(weights['bi'])
         self.lstm_layer.bc = np.array(weights['bc'])
         self.lstm_layer.bo = np.array(weights['bo'])

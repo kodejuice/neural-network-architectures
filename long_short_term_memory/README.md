@@ -5,7 +5,7 @@
 
 ## Sample Usage
 
-### Learn the next number in a progression
+### 1. Learn the next number in a progression
 
 ```python
 import numpy as np
@@ -85,4 +85,82 @@ lstm.train(
   decay_rate=0.00001,
   periodic_callback=periodic_test,
 )
+```
+
+### 2. Simple Language model
+
+Fetch `shakespeare.txt` text from [here](https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt)
+
+```python
+import numpy as np
+from lstm import LSTMNetwork
+
+# Load the text corpus
+text = open("shakespeare.txt").read() # fetch from https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt
+
+# Preprocess the text
+chars = sorted(list(set(text)))
+char_to_idx = {ch: i for i, ch in enumerate(chars)}
+idx_to_char = {i: ch for i, ch in enumerate(chars)}
+
+# Create the LSTM network
+input_size = 1
+hidden_size = 128
+output_size = len(chars)
+
+lstm_model = LSTMNetwork(input_size, hidden_size,
+                         output_size, apply_softmax=True, loss='cross_entropy')
+
+# Training parameters
+sequence_length = 100
+num_epochs = 50
+learning_rate = 0.01
+
+
+# Prepare training data
+def prepare_data(text, char_to_idx, sequence_length):
+  X = []
+  Y = []
+  for i in range(0, len(text) - sequence_length, 1):
+    sequence = text[i:i + sequence_length]
+    label = text[i + 1:i + sequence_length + 1]
+    X.append([char_to_idx[char] for char in sequence])
+    Y.append([char_to_idx[char] for char in label])
+  return np.array(X), np.array(Y)
+
+
+X, Y = prepare_data(text, char_to_idx, sequence_length)
+
+# Normalize input data
+X = X / len(chars)
+
+# One-hot encode output data
+Y = np.eye(len(chars))[Y].reshape(-1, len(chars), 1)
+
+# Generate text function
+def generate_text(seed_text, length):
+  generated = f"{seed_text}"
+  for _ in range(length):
+    x = np.array([char_to_idx[c] for c in generated[-sequence_length:]])
+    x = x / len(chars)
+    y_pred = lstm_model.predict(x)[0][-1]
+    next_char_idx = np.argmax(y_pred)
+    next_char = idx_to_char[next_char_idx]
+    # if next_char is not printable, break loop
+    if not next_char.isprintable():
+      break
+    generated += next_char
+  return f"[{generated}]"
+
+
+def periodic_test():
+  # Generate some text
+  seed_text = "hello there"
+  generated_text = generate_text(seed_text, 10)
+  print("Generated text:", generated_text)
+
+# Train the model
+print("Training...")
+lstm_model.train(X, Y, num_epochs, learning_rate,
+                 periodic_callback=periodic_test)
 ```
