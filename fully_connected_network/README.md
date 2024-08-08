@@ -129,3 +129,123 @@ dnn.train(
   periodic_callback=lambda: print(rand_test())
 )
 ```
+
+### 3. Word2Vec Implementation
+
+Fetch `shakespeare.txt` text from [here](https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt)
+
+```python
+import re
+import numpy as np
+from nltk.tokenize import sent_tokenize, word_tokenize
+from deep_neural_network import DeepNeuralNetwork, Layer, OutputLayer
+
+# import nltk
+# nltk.download('punkt') # need to uncomment at first
+
+
+def split_corpus_into_sentences(corpus):
+  corpus = re.sub(r'[^a-zA-Z.\s]', '', corpus)
+  sentences = sent_tokenize(corpus)
+  processed_sentences = [
+      ' '.join([word.lower()
+               for word in word_tokenize(sentence) if word.isalpha()])
+      for sentence in sentences
+  ]
+  return processed_sentences
+
+
+def prepare_training_data(sentences, window_size=10):
+  training_data = []
+  for sentence in sentences:
+    words = sentence.lower().split()
+    if len(words) < window_size:
+      continue
+    for i in range(len(words) - window_size + 1):
+      context = words[i:i + window_size // 2] + \
+        words[i + window_size // 2 + 1:i + window_size]
+      target = words[i + window_size // 2]
+      context = [word2idx[word] for word in context]
+      target = [word2idx[target]]
+      training_data.append((context, target))
+
+  X, Y = list(zip(*training_data))
+
+  X_one_hot = []
+  for context in X:
+    context_vector = [0] * vocab_size
+    for word_idx in context:
+      context_vector[word_idx] += 1
+    X_one_hot.append(context_vector)
+
+  Y_one_hot = []
+  for target in Y:
+    target_vector = [0] * vocab_size
+    target_vector[target[0]] = 1
+    Y_one_hot.append(target_vector)
+
+  return X_one_hot, Y_one_hot
+
+
+# Load Text corpus
+shakespear_text = open("shakespeare.txt").read() # fetch from https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt
+shakespear_sentences = split_corpus_into_sentences(shakespear_text)
+
+words = set(word.lower()
+            for sentence in shakespear_sentences for word in sentence.split())
+word2idx = {word: idx for idx, word in enumerate(sorted(words))}
+vocab_size = len(words)
+
+X, Y = prepare_training_data(shakespear_sentences)
+
+embedding_size = 5
+
+model = DeepNeuralNetwork([
+  Layer(vocab_size, activation='tanh'),
+  Layer(embedding_size, activation='tanh'),
+  OutputLayer(vocab_size, activation='softmax')
+],
+  loss='cross_entropy',
+  optimization='adam',
+  model_file='word2vec_embedding_model.json'
+)
+
+# Train the model
+model.train(X, Y, epochs=700, initial_learning_rate=0.01, batch_size=32)
+
+
+# Inference, Get similar words
+
+def get_word_embedding(word):
+  # get the embedding vector for a word
+  if word in word2idx:
+    word_idx = word2idx[word]
+    one_hot = [0] * vocab_size
+    one_hot[word_idx] = 1
+    return model.layers[0].forward(np.array(one_hot).reshape(-1, 1)).flatten()
+  else:
+    return None
+
+
+def similar_words(word):
+  word_vec = get_word_embedding(word)
+  if word_vec is None:
+    return []
+
+  similarities = []
+  for word in words:
+    embedding = get_word_embedding(word)
+    if embedding is not None:
+      similarity = np.dot(word_vec, embedding) / \
+          (np.linalg.norm(word_vec) * np.linalg.norm(embedding))
+      similarities.append((word, similarity))
+
+  similarities.sort(key=lambda x: x[1], reverse=True)
+  return [w for w, _ in similarities[:5]]
+
+
+for i, word in enumerate(words):
+  print(word, similar_words(word)[1:4])
+  if i == 20:
+    break
+```

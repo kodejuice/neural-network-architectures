@@ -150,13 +150,13 @@ class DeepNeuralNetwork:
         loss = self.cost(X, Y)
         print(f'Epoch {i}, Loss: {loss:.6f}, LR: {learning_rate:.6f}')
 
-      if i % 100 == 0:
         if periodic_callback:
           periodic_callback()
           print('')
 
         self.output_weights_to_file()
 
+      if i % 100 == 0:
         if generate_dataset_fn:
           X, Y = generate_dataset_fn()
         else:
