@@ -1,7 +1,6 @@
 test.py
-model_weights.json
-gru_model_weights.json
-lstm_model_weights.json
+*.json
+**/*/test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
