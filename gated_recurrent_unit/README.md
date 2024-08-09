@@ -84,14 +84,15 @@ gru.train(
 
 ### 2. Simple Language Model
 
+Fetch `shakespeare.txt` text from [here](https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt)
+
 ```python
 import numpy as np
 from gru import GRUNetwork
 
 # Load the text corpus
-with open('./test.py', 'r', encoding='utf-8') as file:
-  text = file.read()
-text = text[:500]
+# Load the text corpus
+text = open("shakespeare.txt").read() # fetch from https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt
 
 # Preprocess the text
 chars = sorted(list(set(text)))
@@ -160,5 +161,4 @@ def periodic_test():
 # Train the model
 gru_model.train(X, Y, num_epochs, learning_rate,
                  periodic_callback=periodic_test)
-
 ```
