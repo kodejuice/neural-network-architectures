@@ -145,7 +145,7 @@ class LSTMLayer:
 
     # Gradient clipping
     clip_value = 5.0
-    for grad in [dWf, dWi, dWc, dWo, dWy, dbf, dbi, dbc, dbo, dby]:
+    for grad in [dWf, dWi, dWc, dWo, dWy, dbf, dbi, dbc, dbo, dby, dh_prev, dc_prev]:
       np.clip(grad, -clip_value, clip_value, out=grad)
 
     # Update weights and biases
@@ -254,6 +254,7 @@ class LSTMNetwork:
         loss = 0
         dY_sequence = []
         for y_pred, y_true in zip(outputs, Y_seq):
+          y_true = np.array(y_true).reshape(-1, 1)
           loss += self.loss_function(y_pred, y_true)
           dY_sequence.append(self.loss_function_derivative(y_pred, y_true))
 
@@ -282,7 +283,7 @@ class LSTMNetwork:
         Wf = np.array(weights['Wf'])
         bf = np.array(weights['bf'])
         if Wf.shape != self.lstm_layer.Wf.shape or bf.shape != self.lstm_layer.bf.shape:
-          print('Shapes of saved model dont match')
+          print('Shapes of saved model dont match, ignoring saved model')
           os.rename(f'{model_file_name}.json', f'{model_file_name} (old).json')
           return
 
