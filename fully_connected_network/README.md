@@ -130,18 +130,21 @@ dnn.train(
 )
 ```
 
-### 3. Learn Word Embedding with Word2Vec algorithm
+### 3. Learn Word Embedding with Word2Vec algorithm (Negative Sampling)
 
 Fetch `shakespeare.txt` text from [here](https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt)
 
 ```python
 import re
 import numpy as np
+from collections import Counter
 from nltk.tokenize import sent_tokenize, word_tokenize
 from deep_neural_network import DeepNeuralNetwork, Layer, OutputLayer
 
 # import nltk
 # nltk.download('punkt') # need to uncomment at first
+
+# ============================== Utility functions ==============================
 
 
 def split_corpus_into_sentences(corpus):
@@ -155,85 +158,104 @@ def split_corpus_into_sentences(corpus):
   return processed_sentences
 
 
-def prepare_training_data(sentences, window_size=10):
+def prepare_training_data(sentences, window_size=3, num_negative_samples=7):
+  print('Preparing training data...')
   training_data = []
+  wp = word_probabilities
+
   for sentence in sentences:
     words = sentence.lower().split()
     if len(words) < window_size:
       continue
-    for i in range(len(words) - window_size + 1):
-      context = words[i:i + window_size // 2] + \
-        words[i + window_size // 2 + 1:i + window_size]
-      target = words[i + window_size // 2]
-      context = [word2idx[word] for word in context]
-      target = [word2idx[target]]
-      training_data.append((context, target))
 
-  X, Y = list(zip(*training_data))
+    for i, target in enumerate(words):
+      context_start = max(0, i - window_size)
+      context_end = min(len(words), i + window_size + 1)
+      context = words[context_start:i] + words[i + 1:context_end]
 
-  X_one_hot = []
-  for context in X:
-    context_vector = [0] * vocab_size
-    for word_idx in context:
-      context_vector[word_idx] += 1
-    X_one_hot.append(context_vector)
+      for context_word in context:
+        positive_pair = (word2idx[context_word], word2idx[target], 1)
+        training_data.append(positive_pair)
 
-  Y_one_hot = []
-  for target in Y:
-    target_vector = [0] * vocab_size
-    target_vector[target[0]] = 1
-    Y_one_hot.append(target_vector)
+        for _ in range(num_negative_samples):
+          negative_target_idx = np.random.choice(vocab_size, p=wp)
+          while negative_target_idx == word2idx[target]:
+            negative_target_idx = np.random.choice(vocab_size, p=wp)
 
-  return X_one_hot, Y_one_hot
+          negative_word = corpus_words[negative_target_idx]
+          negative_pair = (word2idx[context_word], word2idx[negative_word], 0)
+          training_data.append(negative_pair)
 
+  X = np.zeros((len(training_data), vocab_size))
+  Y = np.zeros(len(training_data))
+  for i, (context_idx, target_idx, label) in enumerate(training_data):
+    X[i, [context_idx, target_idx]] = 1
+    Y[i] = label
+
+  print("Dataset size:", len(X))
+  print("Vocabulary size:", vocab_size)
+
+  return X, Y.reshape(-1, 1)
+
+
+# ============================== Prepare training data ==============================
 
 # Load Text corpus
 shakespear_text = open("shakespeare.txt").read() # fetch from https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt
-shakespear_sentences = split_corpus_into_sentences(shakespear_text)
+sentences = split_corpus_into_sentences(shakespear_text)
 
-words = set(word.lower()
-            for sentence in shakespear_sentences for word in sentence.split())
-word2idx = {word: idx for idx, word in enumerate(sorted(words))}
-vocab_size = len(words)
+word_frequency = Counter(word.lower() for sentence in sentences for word in sentence.split())
+corpus_words = list(word_frequency.keys())
+word2idx = {word: idx for idx, word in enumerate(sorted(corpus_words))}
+vocab_size = len(corpus_words)
 
-X, Y = prepare_training_data(shakespear_sentences)
+# Compute Modified Distribution for Negative Sampling
+word_counts = np.array(list(word_frequency.values()))
+word_counts_34 = np.power(word_counts, 3 / 4)
+total_words_34 = np.sum(word_counts_34)
+word_probabilities = word_counts_34 / total_words_34
 
-embedding_size = 5
+X, Y = prepare_training_data(sentences)
+
+# ============================== Setup model ==============================
+
+embedding_size = 10
 
 model = DeepNeuralNetwork([
   Layer(vocab_size, activation='tanh'),
   Layer(embedding_size, activation='tanh'),
-  OutputLayer(vocab_size, activation='softmax')
+  OutputLayer(1, activation='sigmoid')
 ],
-  loss='cross_entropy',
+  loss='binary_cross_entropy',
   optimization='adam',
-  model_file='word2vec_embedding_model.json'
+  model_file='word2vec_negative_sampling_model.json'
 )
 
+print('\nTraining model...')
 # Train the model
-model.train(X, Y, epochs=700, initial_learning_rate=0.01, batch_size=32)
+model.train(X, Y, epochs=150, initial_learning_rate=0.01, batch_size=32)
 
+# ============================== Inference ==============================
 
-# Inference, Get similar words
 
 def get_word_embedding(word):
   # get the embedding vector for a word
   if word in word2idx:
-    word_idx = word2idx[word]
     one_hot = [0] * vocab_size
-    one_hot[word_idx] = 1
+    one_hot[word2idx[word]] = 1
     return model.layers[0].forward(np.array(one_hot).reshape(-1, 1)).flatten()
   else:
     return None
 
 
 def similar_words(word):
+  # get the top 5 most similar words to a word
   word_vec = get_word_embedding(word)
   if word_vec is None:
     return []
 
   similarities = []
-  for word in words:
+  for word in corpus_words:
     embedding = get_word_embedding(word)
     if embedding is not None:
       similarity = np.dot(word_vec, embedding) / \
@@ -241,11 +263,11 @@ def similar_words(word):
       similarities.append((word, similarity))
 
   similarities.sort(key=lambda x: x[1], reverse=True)
-  return [w for w, _ in similarities[:5]]
+  return [w for w, _ in similarities[:10]]
 
 
-for i, word in enumerate(words):
-  print(word, similar_words(word)[1:4])
-  if i == 20:
-    break
+print("\nSimilar words:")
+for i in range(15):
+  word = np.random.choice(corpus_words)
+  print(word, '=>', similar_words(word)[1:9])
 ```
