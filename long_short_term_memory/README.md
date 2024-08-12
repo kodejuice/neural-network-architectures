@@ -3,7 +3,7 @@
 ![LSTM architecture](https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/LSTM_Cell.svg/2560px-LSTM_Cell.svg.png)
 [LSTM - Wikipedia](https://en.wikipedia.org/wiki/Long_short-term_memory)
 
-## Sample Usage
+## Examples
 
 ### 1. Learn the next number in a progression
 
@@ -109,7 +109,7 @@ hidden_size = 128
 output_size = len(chars)
 
 lstm_model = LSTMNetwork(input_size, hidden_size,
-                         output_size, apply_softmax=True, loss='cross_entropy')
+                        output_size, apply_softmax=True, loss='cross_entropy')
 
 # Training parameters
 sequence_length = 100
@@ -135,10 +135,10 @@ X, Y = prepare_data(text, char_to_idx, sequence_length)
 X = X / len(chars)
 
 # One-hot encode output data
-Y = np.eye(len(chars))[Y].reshape(-1, len(chars), 1)
+Y = np.eye(len(chars))[Y]
 
-# Generate text function
 def generate_text(seed_text, length):
+  """Generate text function"""
   generated = f"{seed_text}"
   for _ in range(length):
     x = np.array([char_to_idx[c] for c in generated[-sequence_length:]])
@@ -146,8 +146,7 @@ def generate_text(seed_text, length):
     y_pred = lstm_model.predict(x)[0][-1]
     next_char_idx = np.argmax(y_pred)
     next_char = idx_to_char[next_char_idx]
-    # if next_char is not printable, break loop
-    if not next_char.isprintable():
+    if next_char == '\n' and generated[-1] == '\n':
       break
     generated += next_char
   return f"[{generated}]"
@@ -155,12 +154,11 @@ def generate_text(seed_text, length):
 
 def periodic_test():
   # Generate some text
-  seed_text = "hello there"
+  seed_text = "Hello"
   generated_text = generate_text(seed_text, 10)
   print("Generated text:", generated_text)
 
 # Train the model
 print("Training...")
-lstm_model.train(X, Y, num_epochs, learning_rate,
-                 periodic_callback=periodic_test)
+lstm_model.train(X, Y, num_epochs, learning_rate, periodic_callback=periodic_test)
 ```

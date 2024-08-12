@@ -3,7 +3,7 @@
 ![RNN architecture](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Recurrent_neural_network_unfold.svg/2880px-Recurrent_neural_network_unfold.svg.png)
 [RNN - Wikipedia](https://en.wikipedia.org/wiki/Recurrent_neural_network)
 
-## Sample Usage
+## Examples
 
 ### Learn the next number in a progression
 

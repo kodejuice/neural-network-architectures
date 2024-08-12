@@ -3,7 +3,7 @@
 ![GRU architecture](https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Gated_Recurrent_Unit%2C_base_type.svg/2880px-Gated_Recurrent_Unit%2C_base_type.svg.png)
 [GRU - Wikipedia](https://en.wikipedia.org/wiki/Gated_recurrent_unit)
 
-## Sample Usage
+## Examples
 
 ### 1. Learn the next number in a progression
 
@@ -131,28 +131,26 @@ X, Y = prepare_data(text, char_to_idx, sequence_length)
 X = X / len(chars)
 
 # One-hot encode output data
-Y = np.eye(len(chars))[Y].reshape(-1, len(chars), 1)
+Y = np.eye(len(chars))[Y]
 
-# Generate text function
 def generate_text(seed_text, length):
+  """Generate text function"""
   generated = f"{seed_text}"
   for _ in range(length):
     x = np.array([char_to_idx[c] for c in generated[-sequence_length:]])
     x = x / len(chars)
-    y_pred = gru_model.predict(x)[0][-1]
+    y_pred = lstm_model.predict(x)[0][-1]
     next_char_idx = np.argmax(y_pred)
     next_char = idx_to_char[next_char_idx]
-    # if next_char is not printable, break loop
-    if not next_char.isprintable():
+    if next_char == '\n' and generated[-1] == '\n':
       break
     generated += next_char
-  generated += "'"
-  return generated
+  return f"[{generated}]"
 
 
 def periodic_test():
   # Generate some text
-  seed_text = "hello there"
+  seed_text = "Hello"
   generated_text = generate_text(seed_text, 10)
   print("Generated text:", generated_text)
 
