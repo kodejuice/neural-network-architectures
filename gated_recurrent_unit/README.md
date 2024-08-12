@@ -91,7 +91,6 @@ import numpy as np
 from gru import GRUNetwork
 
 # Load the text corpus
-# Load the text corpus
 text = open("shakespeare.txt").read() # fetch from https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt
 
 # Preprocess the text
