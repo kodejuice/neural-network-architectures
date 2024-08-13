@@ -164,7 +164,7 @@ class RNNLayer:
 
 
 class RNNNetwork:
-  def __init__(self, input_size, hidden_size, output_size, loss='mse', apply_softmax=False, activation='tanh', optimization='gd', model_file_name='model_weights') -> None:
+  def __init__(self, input_size, hidden_size, output_size, loss='mse', apply_softmax=False, activation='tanh', optimization='gd', model_file_name='rnn_model_weights') -> None:
     self.rnn_layer = RNNLayer(input_size, hidden_size,
                               output_size, activation, optimization)
     self.loss = loss
@@ -242,7 +242,7 @@ class RNNNetwork:
           print('')
           periodic_callback()
           print('')
-      
+
       if epoch % 30 == 0:
         if new_dataset:
           X_sequences, Y_sequences = new_dataset()
@@ -323,4 +323,3 @@ class RNNNetwork:
           np.array(w) for w in W['momentum'][0]]
 
       print('Weights loaded successfully!')
-
