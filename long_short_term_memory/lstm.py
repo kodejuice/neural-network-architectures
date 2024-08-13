@@ -282,10 +282,12 @@ class LSTMNetwork:
       with open(model_file_name, 'r') as f:
         weights = json.load(f)
         Wf = np.array(weights['Wf'])
+        Wy = np.array(weights['Wy'])
         bf = np.array(weights['bf'])
-        if Wf.shape != self.lstm_layer.Wf.shape or bf.shape != self.lstm_layer.bf.shape:
+        if Wf.shape != self.lstm_layer.Wf.shape or bf.shape != self.lstm_layer.bf.shape or Wy.shape != self.lstm_layer.Wy.shape:
           print('Shapes of saved model weights dont match, ignoring saved model')
-          os.rename(f'{plain_model_file_name}.json', f'{plain_model_file_name} (old).json')
+          os.rename(f'{plain_model_file_name}.json',
+                    f'{plain_model_file_name} (old).json')
           return
 
         self.lstm_layer.Wf = Wf
