@@ -87,5 +87,7 @@ rnn.train(
 
 ## Seq2Seq With Attention
 
-![RNN Encoder Decoder - Seq2Seq with attention](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*1V221DO9QIafh4htkwVBYw.jpeg)
-[Source - Attention Mechanism in Seq2Seq](https://towardsdatascience.com/the-definitive-guide-to-bidaf-part-3-attention-92352bbdcb07)
+![RNN Encoder Decoder - Seq2Seq with attention](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*TPlS-uko-n3uAxbAQY_STQ.png)
+[Source - A simple overview of RNN, LSTM and Attention Mechanism](https://medium.com/swlh/a-simple-overview-of-rnn-lstm-and-attention-mechanism-9e844763d07b)
+
+### Learn Language translation
