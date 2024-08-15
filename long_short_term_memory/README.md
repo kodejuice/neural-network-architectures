@@ -105,15 +105,15 @@ idx_to_char = {i: ch for i, ch in enumerate(chars)}
 
 # Create the LSTM network
 input_size = 1
-hidden_size = 128
+hidden_size = 100
 output_size = len(chars)
 
 lstm_model = LSTMNetwork(input_size, hidden_size,
-                        output_size, apply_softmax=True, loss='cross_entropy')
+                         output_size, apply_softmax=True, loss='cross_entropy')
 
 # Training parameters
-sequence_length = 100
-num_epochs = 50
+sequence_length = 30
+num_epochs = 300
 learning_rate = 0.01
 
 
@@ -143,22 +143,23 @@ def generate_text(seed_text, length):
   for _ in range(length):
     x = np.array([char_to_idx[c] for c in generated[-sequence_length:]])
     x = x / len(chars)
-    y_pred = lstm_model.predict(x)[0][-1]
-    next_char_idx = np.argmax(y_pred)
+    y_pred = lstm_model.predict(x)
+    last_char_pred = y_pred[-1]
+    next_char_idx = np.argmax(last_char_pred)
     next_char = idx_to_char[next_char_idx]
-    if next_char == '\n' and generated[-1] == '\n':
-      break
     generated += next_char
   return f"[{generated}]"
 
 
 def periodic_test():
   # Generate some text
-  seed_text = "Hello"
-  generated_text = generate_text(seed_text, 10)
+  seed_text = random.choice(chars)  # start with a random character
+  generated_text = generate_text(seed_text, sequence_length)
   print("Generated text:", generated_text)
 
 # Train the model
 print("Training...")
-lstm_model.train(X, Y, num_epochs, learning_rate, periodic_callback=periodic_test)
+lstm_model.train(X, Y, num_epochs, learning_rate,
+                 periodic_callback=periodic_test)
+
 ```
