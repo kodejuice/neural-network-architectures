@@ -2,6 +2,9 @@ from numpy import random as npr
 from jax import grad
 import jax.numpy as np
 
+from attention import attention_align
+from activation import softmax
+
 
 def init_params(input_size, hidden_size, output_size, attention_size=None):
   attention_size = attention_size or hidden_size
@@ -30,20 +33,6 @@ def init_params(input_size, hidden_size, output_size, attention_size=None):
   }
 
 
-def sigmoid(x):
-  x = np.clip(x, -709, 709)  # Clip input to avoid overflow
-  return 1 / (1 + np.exp(-x))
-
-
-def softmax(x, T=1, col=False):
-  axis = 1 if col else 0
-  clip_value = 10.0
-  x = x - x.max(axis=axis)
-  x = np.clip(x, -clip_value, clip_value)
-  exp_xrel = np.exp(x / T)
-  return exp_xrel / exp_xrel.sum(axis=axis)
-
-
 def mse_loss(y_pred, y_true):
   return np.sum((y_pred - y_true)**2)
 
@@ -52,24 +41,6 @@ def cross_entropy_loss(y_pred, y_true):
   epsilon = 1e-15
   y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
   return -np.sum(y_true * np.log(y_pred))
-
-
-# ============ Bahdanau-Attention ===============
-def attention_score(params, hi, sj):
-  W, V = params['W'], params['V']
-  alpha = np.dot(V.T, np.tanh(np.dot(W, np.vstack([hi, sj]))))
-  return alpha
-
-
-def attention_align(params, encoder_states, sj):
-  alpha = []
-  for hi in encoder_states:
-    alpha.append(attention_score(params, hi, sj))
-  alpha = np.array(alpha)
-  # alpha = softmax(alpha)
-  alpha = sigmoid(alpha)
-  return np.array(alpha)
-# ================================================
 
 
 def rnn_encode_layer(encoder_params, x, h_prev):
@@ -157,76 +128,3 @@ def train(X_sequences, Y_sequences, input_size, hidden_size, epochs, learning_ra
     print(f"Epoch {epoch+1}, Loss: {total_loss / len(X_sequences)}")
 
   return params
-
-
-# ================================================================================
-
-
-max_num = 50 >> 1
-sequence_len = 10
-
-
-def normalize(x): return x / max_num    # map number to 0...1
-def normalize_seq(X): return np.array([normalize(x) for x in X])
-
-
-def one_hot_encode(x):
-  s = np.zeros(max_num).tolist()
-  s[x] = 1
-  s = np.array(s)
-  return s.reshape(-1, 1)
-
-
-def encode_seq(X): return [one_hot_encode(x) for x in X]
-def decode_seq(Y): return [np.argmax(y) for y in Y]
-
-
-def F(x):
-  return (x * 3) % max_num
-
-
-def generate_sequence(start, seq_len=None):
-  seq = [start]
-  for _ in range(seq_len):
-    seq += [F(seq[-1])]
-  return seq
-
-
-train_sequences = [
-  generate_sequence(i, sequence_len)
-  for i in range(max_num)
-]
-
-X_train = np.array([normalize_seq(seq[:-1]) for seq in train_sequences])
-Y_train = np.array([encode_seq(seq[1:]) for seq in train_sequences])
-
-
-def periodic_test(params):
-  rand_start = npr.randint(0, max_num)
-  seq = np.array(generate_sequence(rand_start, sequence_len))
-  X_test = normalize_seq(seq[:-1])
-  Y_test = encode_seq(seq[1:])
-
-  Y_pred = predict(params, X_test)
-  Y_pred_val = np.array([0] + decode_seq(Y_pred))
-
-  print('')
-  print('X_test', seq[:-1], [seq[-1]])
-  print('Y_pred', Y_pred_val)
-  print('Validation loss', sequence_loss(
-    params, X_test, Y_test, cross_entropy_loss, apply_softmax=True))
-  correct_pred = Y_pred_val[-1] == seq[-1]
-  print(
-    f'predicted last number: {Y_pred_val[-1]}, actual: {seq[-1]} {"✅" if correct_pred else "❌"}')
-
-
-params = train(
-  X_train,
-  Y_train,
-  input_size=1,
-  hidden_size=250,
-  epochs=250,
-  learning_rate=0.01,
-  periodic_callback=periodic_test,
-  apply_softmax=True
-)
