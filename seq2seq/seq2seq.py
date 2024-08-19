@@ -51,6 +51,7 @@ def cross_entropy_loss(y_pred, y_true):
 
 
 def rnn_encode_layer(encoder_params, x, h_prev):
+  x = x.reshape(-1, 1)  # make a column vector
   p = encoder_params
   Wx, Wh, bh = p['Wx'], p['Wh'], p['bh']
   h = np.tanh(np.dot(Wx, x) + np.dot(Wh, h_prev) + bh)
@@ -105,8 +106,7 @@ def sequence_loss(params, X_sequence, Y_sequence, loss_func, apply_softmax=False
 grad_sequence_loss = grad(sequence_loss)
 
 
-def train(X_sequences, Y_sequences, input_size, hidden_size, epochs, learning_rate=0.01, loss='mse', apply_softmax=False, periodic_callback=None, decay_rate=0.0001, model_filename='seq2seq_model.json', params=None):
-  output_size = Y_sequences[0][0].shape[0]
+def train(X_sequences, Y_sequences, input_size, output_size, hidden_size, epochs, learning_rate=0.01, loss='mse', apply_softmax=False, periodic_callback=None, decay_rate=0.0001, model_filename='seq2seq_model.json', params=None):
   params = params or init_params(input_size, hidden_size,
                                  output_size, hidden_size, model_filename)
 
@@ -178,7 +178,7 @@ def load_weights(filename, input_size, hidden_size, output_size):
 
 
 class Seq2Seq:
-  def __init__(self, input_size, hidden_size, output_size, model_filename, loss='mse', apply_softmax=False):
+  def __init__(self, input_size, hidden_size, output_size, model_filename='seq2seq_model.json', loss='mse', apply_softmax=False):
     self.input_size = input_size
     self.hidden_size = hidden_size
     self.output_size = output_size
@@ -199,6 +199,7 @@ class Seq2Seq:
       X_sequences,
       Y_sequences,
       self.input_size,
+      self.output_size,
       self.hidden_size,
       epochs=epochs,
       learning_rate=learning_rate,

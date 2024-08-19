@@ -9,7 +9,7 @@
 
 This can be seen as a translation task
 
-Requires:
+Requires [jax](https://github.com/google/jax):
 
 - `pip install jax`
 
@@ -18,50 +18,44 @@ import jax.numpy as np
 from numpy import random as npr
 from seq2seq import Seq2Seq
 
-# Set parameters
-N = 10  # Maximum number in the sequence
-seq_length = 5  # Length of the sequence
+seq_length = 4  # Length of the sequence
 num_samples = 1000  # Number of training samples
-hidden_size = 200
+hidden_size = 50
 learning_rate = 0.01
-num_epochs = 200
+num_epochs = 90
 
 # Generate training data
-X = npr.randint(1, N + 1, size=(num_samples, seq_length))
+X = npr.sample((num_samples, seq_length))
 Y = np.flip(X, axis=1)
-
-# Normalize inputs
-X_normalized = X / N
-
-# One-hot encode outputs
-Y_onehot = np.eye(N)[Y - 1]
 
 # Create and train the model
 model = Seq2Seq(
   input_size=1,
   hidden_size=hidden_size,
-  output_size=N,
-  model_filename='reverse_number_model.json',
-  loss='cross_entropy',
-  apply_softmax=True
+  output_size=1,
+  loss='mse',
 )
 
 def periodic_test():
   # Test the model
-  test_seq = npr.randint(1, N+1, size=(1, seq_length))
-  test_seq_normalized = test_seq / N
-  predicted = model.predict(test_seq_normalized[0])
-  predicted_seq = np.argmax(predicted, axis=1) + 1
-
-  print("Test sequence:", test_seq[0])
-  print("Predicted (reversed) sequence:", predicted_seq.flatten())
-  print("Actual reversed sequence:", np.flip(test_seq[0]))
+  test_seq = npr.sample((1, seq_length))[0]
+  reversed_seq = np.flip(test_seq)
+  predicted = model.predict(test_seq)
+  print('-' * 50)
+  print("Test sequence:", test_seq)
+  print('-' * 50)
+  print("Predicted (reversed) sequence:", predicted.flatten())
+  print("Actual reversed sequenced:    ", reversed_seq)
+  print('-' * 50)
+  print("Loss:", model.sequence_loss(test_seq, reversed_seq))
   print()
 
 
+periodic_test()
+
 model.train(
-  X_sequences=X_normalized,
-  Y_sequences=Y_onehot,
+  X_sequences=X,
+  Y_sequences=Y,
   epochs=num_epochs,
   learning_rate=learning_rate,
   periodic_callback=periodic_test,
