@@ -2,6 +2,7 @@ test.py
 *.json
 **/*/test.py
 test/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
