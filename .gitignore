@@ -3,6 +3,8 @@ test.py
 **/*/test.py
 test/
 data/
+*.pth
+*.pt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
