@@ -4,7 +4,7 @@
 
 Implemented with [PyTorch](https://pytorch.org)
 
-## Learn to a invert a sequence of 1's and 0's
+## Learn to invert a sequence of 1's and 0's
 
 ```python
 import os
