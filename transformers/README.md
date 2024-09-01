@@ -106,7 +106,8 @@ x = torch.tensor(np.array([[2, 0, 0, 0, 0, 0, 0, 0, 0, 0]]), dtype=torch.long)
 print(f'In: {x}', 'Predict:', model.predict(x, SOS_token)[:, 1:])
 ```
 
-Inspiration:
+Resources:
 
+- [Attention Is All You Need](https://arxiv.org/abs/1706.03762)
 - [https://jalammar.github.io/illustrated-transformer/](https://jalammar.github.io/illustrated-transformer/)
 - [https://www.kaggle.com/code/arunmohan003/transformer-from-scratch-using-pytorch/comments](https://www.kaggle.com/code/arunmohan003/transformer-from-scratch-using-pytorch/comments)
