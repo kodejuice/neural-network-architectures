@@ -14,5 +14,6 @@ In the case of more complex architectures, I utilized either [jax](https://githu
 - [x] GRU
 - [x] LSTM
 - [x] Transformer
+- [ ] CNN
 
 For each of them, I have included some basic code for training and evaluation in the README.md file
